@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Guitar from "./components/Guitar";
 import Header from "./components/Header";
 import { db } from "./data/db";
@@ -7,9 +7,17 @@ function App() {
   const [data, setData] = useState(db);
   const [cart, setCart] = useState([]);
 
+  const maxItems = 5;
+  const minItems = 1;
+
+  useEffect(() => {
+    localStorage.setItem("cart", JSON.stringify(cart));
+  }, [cart]);
+
   function addToCart(item) {
     const itemExists = cart.findIndex((guitar) => guitar.id === item.id);
     if (itemExists >= 0) {
+      if (cart[itemExists].quantity >= maxItems) return;
       const updatedCart = [...cart];
       updatedCart[itemExists].quantity++;
       setCart(updatedCart);
@@ -19,10 +27,48 @@ function App() {
     }
   }
 
+  function removeFromCart(id) {
+    setCart((prevCart) => prevCart.filter((guitar) => guitar.id !== id));
+  }
+
+  function increaseQuantity(id) {
+    const updatedCart = cart.map((item) => {
+      if (item.id === id && item.quantity < maxItems) {
+        return {
+          ...item,
+          quantity: item.quantity + 1,
+        };
+      }
+      return item;
+    });
+    setCart(updatedCart);
+  }
+
+  function decrementQuantity(id) {
+    const updatedCart = cart.map((item) => {
+      if (item.id === id && item.quantity > minItems) {
+        return {
+          ...item,
+          quantity: item.quantity - 1,
+        };
+      }
+      return item;
+    });
+    setCart(updatedCart);
+  }
+
+  function clearCart() {
+    setCart([]);
+  }
+
   return (
     <>
       <Header
-      cart={cart}
+        cart={cart}
+        removeFromCart={removeFromCart}
+        increaseQuantity={increaseQuantity}
+        decrementQuantity={decrementQuantity}
+        clearCart={clearCart}
       />
 
       <main className="container-xl mt-5">
